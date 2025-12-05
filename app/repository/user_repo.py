@@ -1,39 +1,62 @@
-from typing import Dict, List, Optional
-from datetime import datetime
-
-from app.models.entities import User
-
+from app.core.db import get_conn, release_conn
+from app.models.entities.users import User
 
 class UserRepository:
     def __init__(self):
-        self._users_memory_db: Dict[str, User] = {}
-        self._next_id = 1
+        pass
 
-    def save(self, name: str, email: str) -> User:
-        user = User(
-            id=self._next_id,
-            name=name,
-            email=email,
-            created_at=datetime.now()
-        )
-        self._users_memory_db[self._next_id] = user
-        self._next_id += 1
-        return user
+    def create_user(self, name: str, email: str):
+        conn = get_conn()
+        try:
+            user = User(name=name, email=email)
+            conn.add(user)
+            conn.commit()
+            conn.refresh(user)
+            return user
+        finally:
+            release_conn(conn)
 
-    def find_by_id(self, user_id: int) -> Optional[User]:
-        return self._users_memory_db.get(user_id)
+    def get_user_by_id(self, id: int):
+        conn = get_conn()
+        try:
+            return (
+                conn.query(User)
+                .filter(User.id == id)
+                .first()
+            )
+        finally:
+            release_conn(conn)
 
-    def find_by_email(self, email: str) -> Optional[User]:
-        for user in self._users_memory_db.values():
-            if user.email == email:
-                return user
-        return None
 
-    def find_all(self) -> List[User]:
-        return list(self._users_memory_db.values())
+    def get_user_by_email(self, email: str):
+        conn = get_conn()
+        try:
+            return (
+                conn.query(User)
+                .filter(User.email == email)
+                .first()
+            )
+        finally:
+            release_conn(conn)
 
-    def delete(self, user_id: int) -> bool:
-        if user_id in self._users_memory_db:
-            del self._users_memory_db[user_id]
-            return True
-        return False
+    def update_user_name(self, user_id: int, new_name: str):
+        conn = get_conn()
+        try:
+            user = conn.query(User).filter(User.id == user_id).first()
+            if not user:
+                return
+            user.name = new_name
+            conn.commit()
+        finally:
+            release_conn(conn)
+
+    def delete_user_by_email(self, email: str):
+        conn = get_conn()
+        try:
+            user = conn.query(User).filter(User.email == email).first()
+            if not user:
+                return
+            conn.delete(user)
+            conn.commit()
+        finally:
+            release_conn(conn)

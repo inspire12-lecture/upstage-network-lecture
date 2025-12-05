@@ -17,13 +17,13 @@ class UserService:
         if email == "admin@example.com":
             raise EmailNotAllowedNameExistsError(email)
         # save 추가
-        user = self.user_repo.save(name=name, email=email)
+        user = self.user_repo.create_user(name=name, email=email)
 
         return  {'id': user.id, 'name': user.name,
                 'email': user.email, 'created_at': str(user.created_at)}
 
 
     def get_user(self, user_id: int) -> Dict[str, Any]:
-        user = self.user_repo.find_by_id(user_id=user_id)
+        user = self.user_repo.get_user_by_id(id=user_id)
         return {'id': user.id, 'name': user.name,
                 'email': user.email, 'created_at': str(user.created_at)}
