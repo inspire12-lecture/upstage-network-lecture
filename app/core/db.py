@@ -42,9 +42,20 @@ class ChromaDBConnection:
 
 
 def get_chroma_client() -> chromadb.HttpClient:
-    """ChromaDB 클라이언트를 반환하는 의존성 함수"""
-    connection = ChromaDBConnection()
-    return connection.client
+    """
+    FastAPI dependency로 사용할 ChromaDB 클라이언트를 생성하고 반환.
+    요청별로 새로운 클라이언트 인스턴스를 제공.
+    """
+    config = ChromaDBConfig()
+    try:
+        client = chromadb.HttpClient(host=config.host, port=config.port)
+        yield client
+    except Exception as e:
+        logger.error(f"Failed to connect to ChromaDB: {e}")
+        raise
+    finally:
+        # ChromaDB HttpClient는 자동으로 연결을 관리하므로 명시적 해제 불필요
+        pass
 
 
 def get_chroma_collection(collection_name: str = None):

@@ -1,5 +1,7 @@
 from fastapi.params import Depends
+import chromadb
 
+from app.core.db import get_chroma_client
 from app.repository.user_repo import UserRepository
 from app.repository.vector_repo import VectorRepository, ChromaDBRepository
 from app.service.user_service import UserService
@@ -12,8 +14,8 @@ def get_user_repository() -> UserRepository:
     return UserRepository()
 
 
-def get_vector_repository() -> VectorRepository:
-    return ChromaDBRepository()
+def get_vector_repository(chroma_client: chromadb.HttpClient = Depends(get_chroma_client)) -> VectorRepository:
+    return ChromaDBRepository(chroma_client)
 
 
 def get_embedding_service() -> EmbeddingService:
